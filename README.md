@@ -1,6 +1,6 @@
 # Build from source
 codon compiller is required
-```shell
+```bash
 python3 setup.py build_ext --inplace
 ```
 
