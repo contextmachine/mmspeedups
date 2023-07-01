@@ -1,4 +1,10 @@
+# Build from source
+codon compiller is required
+```shell
+python3 setup.py build_ext --inplace
+```
 
+# Test speedups
 ```shell
 python3 tests/speedtest.py
 
