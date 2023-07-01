@@ -1,0 +1,601 @@
+
+import math
+import python
+from typing import Tuple, List, overload, Ptr,Array
+
+VectorTuple = Tuple[float, float, float]
+
+LineTuple = Tuple[VectorTuple, VectorTuple]
+ExtendedVectorTuple = Tuple[float, float, float, float]
+TransformTuple = Tuple[ExtendedVectorTuple, ExtendedVectorTuple, ExtendedVectorTuple, ExtendedVectorTuple]
+OptionalVectorTuple= Optional[Tuple[float,float,float]]
+TransformList = List[List[float]]
+
+
+def extend_tuple(t: VectorTuple) -> ExtendedVectorTuple:
+    return t[0], t[1], t[2], 1.0
+
+
+def reduce_tuple(t: ExtendedVectorTuple) -> VectorTuple:
+    return t[0], t[1], t[2]
+
+
+# def transform_list_to_tuple(m: TransformList) -> TransformTuple:
+#    return tuple(m[0]), tuple(m[1]), tuple(m[2]), tuple(m[3])
+
+
+def transform_tuple_to_list(m: TransformTuple) -> TransformList:
+    return [list(m[0]), list(m[1]), list(m[2]), list(m[3])]
+
+
+def dot(u: Tuple[float, float, float], v: Tuple[float, float, float]) -> float:
+    """
+    3D dot product
+    @param u:
+    @param v:
+    @return: float
+    """
+
+    return u[0] * v[0] + u[1] * v[1] + u[2] * v[2]
+
+
+def norm(v: Tuple[float, float, float]) -> float:
+    """
+    norm is a length of  vector
+    @param v:
+    @return:
+    """
+    return math.sqrt(dot(v, v))
+
+
+def subvec(u: VectorTuple, v: VectorTuple) -> VectorTuple:
+    return u[0] - v[0], u[1] - v[1], u[2] - v[2]
+
+
+def addvec(u: VectorTuple, v: VectorTuple) -> VectorTuple:
+    return u[0] + v[0], u[1] + v[1], u[2] + v[2]
+
+
+def divvec(u: VectorTuple, f: float) -> VectorTuple:
+    return u[0] / f, u[1] / f, u[2] / f
+
+
+def mulvec(u: VectorTuple, v: float) -> VectorTuple:
+    return u[0] * v, u[1] * v, u[2] * v
+
+
+def dist(P: VectorTuple, Q: VectorTuple) -> float:
+    """
+    distance is a norm of difference
+    @param P: vector
+    @param Q: vector
+    @return: float
+    True
+    """
+    return norm(subvec(P, Q))
+
+
+def unit(vec: VectorTuple) -> VectorTuple:
+    """pure unit implementation"""
+
+    nv = norm(vec)
+    return vec[0] / nv, vec[1] / nv, vec[2] / nv
+
+
+def cross(a: VectorTuple, b: VectorTuple) -> VectorTuple:
+    """pure cross product implementation"""
+
+    return a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]
+
+
+def angle(a: VectorTuple, b: VectorTuple) -> float:
+    """pure angle implementation"""
+    return math.acos(dot(unit(a), unit(b)))
+
+
+#def rotation_matrix(angle: float, axis: VectorTuple) -> TransformTuple:
+#    """
+#    Returns a 4x4 transformation matrix that performs a rotation of the given angle around the given axis.
+#    Parameters:
+#    angle (float): The angle of rotation, in radians.
+#    axis (numpy.ndarray): An array of shape (3,) representing the rotation axis.
+#    Returns:
+#    numpy.ndarray: A 4x4 transformation matrix representing the rotation.
+#    """
+#    # Normalize the rotation axis
+#    axis = unit(axis)
+#    # Compute the sin and cosine of the angle of rotation
+#    c = math.cos(angle)
+#    s = math.sin(angle)
+#    # Compute the components of the rotation matrix
+#    x = axis[0]
+#    y = axis[1]
+#    z = axis[2]
+#    xs = x * s
+#    ys = y * s
+#    zs = z * s
+#    c1 = 1 - c
+#    xyc1 = x * y * c1
+#    xzc1 = x * z * c1
+#    yzc1 = y * z * c1
+#    # Construct the 4x4 transformation matrix
+#    return ((x * x * c1 + c, xyc1 - zs, xzc1 + ys, 0.0), (xyc1 + zs, y * y * c1 + c, yzc1 - xs, 0.0),
+#            (xzc1 - ys, yzc1 + xs, z * z * c1 + c, 0.0), (0.0, 0.0, 0.0, 1.0))
+#
+#
+#def zero_transform() -> TransformTuple:
+#    return ((1.0, 0.0, 0.0, 0.0),
+#            (0.0, 0.0, 0.0, 0.0),
+#            (0.0, 0.0, 0.0, 0.0),
+#            (0.0, 0.0, 0.0, 0.0))
+#
+#
+#def combine_matrices(matrix1: TransformTuple, matrix2: TransformTuple) -> TransformTuple:
+#    """
+#    Combines two 4x4 transformation matrices and returns the result.
+#
+#    Parameters:
+#    matrix1 (list): A list of lists representing the first matrix.
+#    matrix2 (list): A list of lists representing the second matrix.
+#
+#    Returns:
+#    list: A list of lists representing the combined matrix.
+#    """
+#    # Create an empty matrix to hold the result
+#    result = zero_transform()
+#
+#    # Multiply the matrices
+#    for i in range(4):
+#        for j in range(4):
+#            for k in range(4):
+#                result[i][j] += matrix1[i][k] * matrix2[k][j]
+#
+#    return result
+#
+#
+#def combine_matrices_inplace(matrix1: TransformList, matrix2: TransformTuple):
+#    for i in range(4):
+#        for j in range(4):
+#            for k in range(4):
+#                matrix1[i][j] = matrix1[i][k] * matrix2[k][j]
+#
+#
+#def transform_point(point: VectorTuple, matrix: TransformTuple):
+#    """
+#    Applies a 4x4 transformation matrix to a three-dimensional point.
+#    Parameters:
+#    point (list): A list of length 3 representing the point to be transformed.
+#    matrix (list): A list of lists representing a 4x4 transformation matrix.
+#    Returns:
+#    list: A list of length 3 representing the transformed point.
+#    """
+#    # Append 1 to the point to make it a homogeneous coordinate
+#    point = extend_tuple(point)
+#    # Apply the transformation matrix to the point
+#    x = point[0] * matrix[0][0] + point[1] * matrix[0][1] + point[2] * matrix[0][2] + matrix[0][3]
+#    y = point[0] * matrix[1][0] + point[1] * matrix[1][1] + point[2] * matrix[1][2] + matrix[1][3]
+#    z = point[0] * matrix[2][0] + point[1] * matrix[2][1] + point[2] * matrix[2][2] + matrix[2][3]
+#    w = point[0] * matrix[3][0] + point[1] * matrix[3][1] + point[2] * matrix[3][2] + matrix[3][3]
+#    # Divide by the last coordinate to convert back to Cartesian coordinates
+#    x /= w
+#    y /= w
+#    z /= w
+#    # Remove the last coordinate to get the transformed point
+#    transformed_point = (x, y, z)
+#    return transformed_point
+#
+#
+#def transpose(matrix: TransformTuple):
+#    """
+#    Transposes a 4x4 matrix.
+#
+#    Parameters:
+#    matrix (list): A list of lists representing the matrix.
+#
+#    Returns:
+#    list: A list of lists representing the transposed matrix.
+#    """
+#    # Create an empty matrix to hold the result
+#    result: List[List[float]] = [[0.0 for j in range(4)] for i in range(4)]
+#
+#    # Transpose the matrix
+#    for i in range(4):
+#        for j in range(4):
+#            print(i, j)
+#            result[i][j] = matrix[j][i]
+#
+#    return result
+#
+#
+# @dataclass(python=True)
+# class Transform:
+#    a: float = 1.0
+#    b: float = 0.0
+#    c: float = 0.0
+#    d: float = 0.0
+#    e: float = 0.0
+#    f: float = 1.0
+#    g: float = 0.0
+#    h: float = 0.0
+#    i: float = 0.0
+#    j: float = 0.0
+#    k: float = 1.0
+#    l: float = 0.0
+#    m: float = 0.0
+#    n: float = 0.0
+#    o: float = 0.0
+#    p: float = 1.0
+#
+#    def astuple(self) -> TransformTuple:
+#        return ((self.a, self.b, self.c, self.d),
+#                (self.e, self.f, self.g, self.h),
+#                (self.i, self.j, self.k, self.l),
+#                (self.m, self.n, self.o, self.p))
+#
+#    def aslist(self) -> TransformList:
+#        return [[self.a, self.b, self.c, self.d],
+#                [self.e, self.f, self.g, self.h],
+#                [self.i, self.j, self.k, self.l],
+#                [self.m, self.n, self.o, self.p]]
+#
+#    def __init__(self: Transform,
+#                 a: float = 1.0, b: float = 0.0, c: float = 0.0, d: float = 0.0,
+#                 e: float = 0.0, f: float = 1.0, g: float = 0.0, h: float = 0.0,
+#                 i: float = 0.0, j: float = 0.0, k: float = 1.0, l: float = 0.0,
+#                 m: float = 0.0, n: float = 0.0, o: float = 0.0, p: float = 1.0):
+#        self.a, self.b, self.c, self.d, \
+#            self.e, self.f, self.g, self.h, \
+#            self.i, self.j, self.k, self.l, \
+#            self.m, self.n, self.o, self.p = a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p
+#    @overload
+#    def __init__(self: Transform):
+#        self.a, self.b, self.c, self.d, \
+#            self.e, self.f, self.g, self.h, \
+#            self.i, self.j, self.k, self.l, \
+#            self.m, self.n, self.o, self.p = (
+#            1.0, 0.0, 0.0, 0.0,
+#            0.0, 1.0, 0.0, 0.0,
+#            0.0, 0.0, 1.0, 0.0,
+#            0.0, 0.0, 0.0, 1.0)
+#
+#    @overload
+#    def __init__(self: Transform, translate: VectorTuple = (0, 0, 0)):
+#        self.a, self.b, self.c, self.d, \
+#            self.e, self.f, self.g, self.h, \
+#            self.i, self.j, self.k, self.l, \
+#            self.m, self.n, self.o, self.p = (1.0, 0.0, 0.0, translate[0],
+#                                              0.0, 1.0, 0.0, translate[1],
+#                                              0.0, 0.0, 1.0, translate[2],
+#                                              0.0, 0.0, 0.0, 1.0)
+#
+#    @overload
+#    def __init__(self: Transform, scale_x: float = 1.0, scale_y: float = 1.0, scale_z: float = 1.0):
+#        self.a, self.b, self.c, self.d, \
+#            self.e, self.f, self.g, self.h, \
+#            self.i, self.j, self.k, self.l, \
+#            self.m, self.n, self.o, self.p = (scale_x, 0.0, 0.0, 0,
+#                                              0.0, scale_y, 0.0, 0,
+#                                              0.0, 0.0, scale_z, 0,
+#                                              0.0, 0.0, 0.0, 1.0)
+#
+#    @overload
+#    def __init__(self: Transform, angle: float = 0.0, axis: VectorTuple = (0, 0, 1)):
+#        self.a, self.b, self.c, self.d, \
+#            self.e, self.f, self.g, self.h, \
+#            self.i, self.j, self.k, self.l, \
+#            self.m, self.n, self.o, self.p = rotation_matrix(angle, axis)
+#
+#    @overload
+#    def __init__(self: Transform, matrix: TransformTuple):
+#        self.a, self.b, self.c, self.d, \
+#            self.e, self.f, self.g, self.h, \
+#            self.i, self.j, self.k, self.l, \
+#            self.m, self.n, self.o, self.p = list(matrix[0]) + list(matrix[1]) + list(matrix[2]) + list(matrix[3])
+#
+#    @overload
+#    def __imatmul__(self: Transform, other: Transform):
+#        self.a, self.b, self.c, self.d, \
+#            self.e, self.f, self.g, self.h, \
+#            self.i, self.j, self.k, self.l, \
+#            self.m, self.n, self.o, self.p = combine_matrices(self.astuple(), other.list())
+#
+#    def __rmatmul__(self, other: Transform) -> Transform:
+#        return Transform(matrix=combine_matrices(other.astuple(), self.astuple()))
+#
+#    def __matmul__(self, other: Transform) -> Transform:
+#        return Transform(matrix=combine_matrices(self.astuple(), other.astuple()))
+#
+#    def __matmul__(self, other: VectorTuple) -> VectorTuple:
+#        return transform_point(other, self.astuple())
+#
+#    def transform(self, other: Transform):
+#        self.__imatmul__(other)
+#
+#
+#    def is_zero(self):
+#        return (self.a, self.b, self.c, self.d,
+#         self.e, self.f, self.g, self.h,
+#         self.i, self.j, self.k, self.l,
+#         self.m, self.n, self.o, self.p) ==(
+#            1.0, 0.0, 0.0, 0.0,
+#            0.0, 1.0, 0.0, 0.0,
+#            0.0, 0.0, 1.0, 0.0,
+#            0.0, 0.0, 0.0, 1.0)
+#
+
+
+class Vector:
+
+    _tup: Ptr[float]
+    def __init__(self, x:float, y:float, z:float):
+        self._tup = Ptr[float](3)
+
+        self._tup[0]=x
+        self._tup[1] = y
+        self._tup[2] = z
+    def __init__(self, vec:VectorTuple):
+        self._tup[0] = vec[0]
+        self._tup[1] = vec[1]
+        self._tup[2] = vec[2]
+    @property
+    def x(self)->float:
+        return self._tup[0]
+
+    @property
+    def y(self) -> float:
+        return self._tup[1]
+
+    @property
+    def z(self) -> float:
+        return self._tup[2]
+    def __add__(self, other: Vector) -> Vector:
+        return Vector(self._tup[0] + other.x, self._tup[1] + other.y, self._tup[2] + other.z)
+
+
+    def __repr__(self):
+        return f'Vector({self._tup[0]}, {self._tup[1]}, {self._tup[2]})'
+
+    def __iter__(self):
+        return iter([self._tup[0], self._tup[1], self._tup[2]])
+
+    def __mul__(self, other: float) -> Vector:
+        return Vector(mulvec(self.astuple(), other))
+
+    def __truediv__(self, other: float) -> Vector:
+        return Vector(divvec(self.astuple(), other))
+
+    def __len__(self) -> int:
+        return 3
+
+    def __sub__(self, other: Vector) -> Vector:
+        return Vector(self.x - other.x, self.y - other.y, self.z - other.z)
+
+    def astuple(self) -> VectorTuple:
+        return self.x, self.y, self.z
+
+    def aslist(self) -> List[float]:
+        return [self.x, self.y, self.z]
+
+    def __getitem__(self, item: int) -> float:
+        return self.aslist()[item]
+
+    def dot(self, other: Vector) -> float:
+        return dot(self.astuple(), other.astuple())
+
+    def cross(self, other: Vector) -> Vector:
+        return Vector(cross(self.astuple(), other.astuple()))
+
+    def dist(self, other: Vector) -> float:
+        return dist(self.astuple(), other.astuple())
+
+    def angle(self, other: Vector) -> float:
+        return angle(self.astuple(), other.astuple())
+
+    def unit(self) -> Vector:
+        return Vector(unit(self.astuple()))
+
+    def norm(self) -> float:
+        return norm(self.astuple())
+ 
+
+
+    # def __matmul__(self, other: Vector) -> float:
+    #    return dot(self.astuple(), other.astuple())
+    #
+    # def __rmatmul__(self, other: Transform) -> Vector:
+    #    return transform_point(self.astuple(), other.astuple())
+
+vecs=Ptr[Vector](4)
+ii:int=0
+vecs[0]=Vector(0.0,1.1,2.2)
+@tuple
+class Vec:
+    x:float
+    y:float
+    z:float
+    def __add__(self,other:Vec):
+        return Vec(*addvec((self.x,self.y,self.z), (other.x,other.y,other.z)))
+    def __sub__(self,other:Vec):
+        return Vec(*subvec((self.x,self.y,self.z), (other.x,other.y,other.z)))
+def vector(i:int)->Vec:
+    v=vecs[i]
+    return Vec(v.x,v.y,v.z)
+
+
+def _evaluate_line(start:VectorTuple,vec:VectorTuple, t: List[float])->List[OptionalVectorTuple]:
+        arr = [None]*len(t)
+        i = 0
+        for u in t:
+            arr[i] = addvec(start, mulvec(vec, u))
+            i += 1
+        return arr
+
+
+
+
+
+
+@overload
+def _evaluate_line(start:VectorTuple,vec:VectorTuple, t: float) -> VectorTuple:
+    return addvec(start, mulvec(vec, t))
+
+# @dataclass(python=True)
+# class PointLineSolution:
+#    t:float
+#    point:Vector
+#
+LineTuple = Tuple[VectorTuple,VectorTuple]
+
+def proximity_points(line1:LineTuple , line2:LineTuple )->Tuple[float,float]:
+   # Extract points and directions from input lines
+   p1, v1 = line1
+   p2, v2 = line2
+
+   # Calculate direction vector of the line connecting the two points
+   w = subvec(p1,  p2   )
+
+   # Calculate direction vectors of the two input lines
+   a = dot( v1, v1)
+   b = dot( v1, v2)
+   c = dot( v2, v2)
+   d = dot( v1, w)
+   e = dot( v2, w)
+
+   # Calculate parameters for the two closest points
+   t = (b * e - c * d) / (a * c - b ** 2)
+   s = (a * e - b * d) / (a * c - b ** 2)
+
+   # Calculate the two closest points
+   return t,  s
+
+
+def closest_point_on_line(point:VectorTuple, line:LineTuple)->float:
+    """
+    Returns the closest point on a line to a given point in 3D space.
+
+    Parameters:
+    point (numpy.ndarray): An array of shape (3,) representing a point in 3D space.
+    line (tuple): A tuple of two numpy arrays of shape (3,) representing a point on the line and the direction of the line.
+
+    Returns:
+    numpy.ndarray: An array of shape (3,) representing the closest point on the line to the given point.
+    """
+    # Extract point and direction from input line
+    p1, v1 = line
+
+    # Calculate vector from point to line
+    w = subvec(point,  p1   )
+
+
+    # Calculate parameter for closest point on line
+    t = dot( w,v1) / dot( v1,v1)
+
+    # Calculate closest point on line
+
+
+    return t
+
+
+# def eval_quad(t1, t2, quad: list[PointTuple, PointTuple, PointTuple, PointTuple]):
+#    a, b, c, d = np.array(quad)
+#    dc, ab = (d + ((c - d) * t1)), (a + ((b - a) * t1))
+#    return ((dc - ab) * t2) + ab
+
+
+
+def line_line_intersection(line1: LineTuple , line2: LineTuple )->Optional[Tuple[float,float]]:
+   # Extract points and directions from input lines
+
+   p1, v1 = line1
+   p2, v2 = line2
+
+   # Calculate direction vector of the line connecting the two points
+   w = subvec(p1 , p2  )
+
+   # Calculate direction vectors of the two input lines
+   _cross = cross(v1, v2)
+   if _cross == (0.0, 0.0, 0.0):
+       # Lines are parallel, return None
+       return None
+   else:
+       # Calculate parameters for point of intersection
+
+       s1 = dot(cross(w, v2), _cross) / norm(_cross) ** 2
+       s2 = dot(cross(w, v1) ,_cross) / norm(_cross)  ** 2
+
+       # Calculate intersection point
+
+
+       return  s1,s2
+
+
+
+
+@dataclass(python=True)
+class Line:
+    start: VectorTuple
+    end: VectorTuple
+    direction:VectorTuple
+    unit:VectorTuple
+    length:float
+    def __init__(self, start: VectorTuple, end:VectorTuple):
+        self.start = start
+        self.end = end
+        self.direction = subvec(self.end, self.start)
+        self.unit = unit(self.direction)
+        self.length = norm(self.direction)
+
+    def __call__(self, t: float) -> VectorTuple:
+        return _evaluate_line(self.start,self.end, t)
+    def __call__(self, t: List[float]) -> List[OptionalVectorTuple]:
+
+        return _evaluate_line(self.start,self.end, t)
+
+
+
+    def __repr__(self):
+        return f'Line({self.start}, {self.end})'
+    @property
+    def a(self):
+        return self.direction[0]
+
+    @property
+    def b(self):
+        return self.direction[1]
+
+
+
+    @property
+    def c(self):
+        return self.direction[2]
+    def closest_point(self, pt:VectorTuple)->VectorTuple:
+        return _evaluate_line(self.start, self.direction, closest_point_on_line(pt, (self.start, self.direction)))
+    def closest_point(self, pt:List[VectorTuple])->List[VectorTuple]:
+        return [self.closest_point(ppt) for ppt in pt]
+    def closest_point(self, pt:List[List[float]])->List[VectorTuple]:
+        return [self.closest_point((ppt[0],ppt[1],ppt[2])) for ppt in pt]
+    def intersect(self, other:Line)->Tuple[VectorTuple,VectorTuple]:
+        u,v=line_line_intersection(self.to_line_tuple(), other.to_line_tuple())
+
+        return _evaluate_line(self.start, self.direction, u),_evaluate_line(other.start, other.direction, u)
+
+    def intersect(self, pt:List[Line])->List[Tuple[VectorTuple,VectorTuple]]:
+        return [self.intersect(ppt) for ppt in pt]
+    def proximity(self, other:Line)->Tuple[VectorTuple,VectorTuple]:
+        u,v=proximity_points(self.to_line_tuple(), other.to_line_tuple())
+
+        return _evaluate_line(self.start, self.direction, u),_evaluate_line(other.start, other.direction, u)
+
+    def proximity(self, other: List[Line]) -> List[Tuple[VectorTuple, VectorTuple]]:
+        return [self.proximity(ppt) for ppt in other]
+
+    def proximity_line(self, other:Line)->Line:
+        u,v=proximity_points(self.to_line_tuple(), other.to_line_tuple())
+
+        return Line(_evaluate_line(self.start, self.direction, u),_evaluate_line(other.start, other.direction, u))
+    def proximity_line(self, other: List[Line]) -> List[Line]:
+
+        return [self.proximity_line(ppt) for ppt in other]
+
+    def to_line_tuple(self)->LineTuple:
+        return self.start,self.direction

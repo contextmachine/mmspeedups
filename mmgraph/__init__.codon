@@ -1,0 +1,90 @@
+
+
+class Graph[N]:
+    table:List[Optional[N]]=[]
+    relay:Dict[str, Dict[str, Optional[int]]]={}
+
+
+    def __setitem__(self, key:int, value:N):
+        self.table[key]=value
+
+    def append(self, item:N):
+        self.table.append(item)
+        item.setnum(len(self.table))
+
+        self.relay[str(item.num)]={}
+    def __getitem__(self, key: int)->N:
+        return self.table[key]
+    def get_relay(self, item:N, name:str)->Optional[N]:
+        i=self.relay[str(item.num)][name]
+        if i==-1:
+            return None
+        else:
+            return self.table[i]
+    def set_relay(self, item:N, name:str, val:N):
+        dct=self.relay[str(item.num)]
+        dct[name]=val.num
+
+    def fields(self, item:N):
+        return list(self.relay[str(item.num)].keys())
+
+
+
+class Node[T]:
+
+    data: T
+
+    graph:Graph[Node[T]]
+    num: int=0
+
+    def __init__(self,  data:T, graph:Graph[Node[T]]):
+        self.num=0
+
+        self.graph=graph
+
+        self.data=data
+        self.graph.append(self)
+
+
+    def setnum(self,num:int):
+        self.num=num-1
+
+    def set_field(self, name:str, n:Node):
+        self.graph.set_relay(self, name, n)
+    def get_field(self, name:str)->Node[T]:
+        return self.graph.get_relay(self, name)
+    @property
+    def fields(self):
+        return self.graph.fields(self)
+
+
+    def __repr__(self)->str:
+        s=""
+        for k in self.fields:
+            val=self.get_field(k)
+
+            s=f'"{k}":{self.get_field(k)},'
+
+        return "{"+s[:-1]+"}"
+
+
+
+
+    def get_table(self):
+        return self.graph.table
+    def get_relay(self):
+        return self.graph.relay
+
+
+pgraph=Graph[Node[float]]()
+
+@dataclass(python=True)
+class NodeBind:
+    data:float
+    num:int
+    def __init__(self, data:float):
+        nd=Node[float]( data, pgraph)
+        self.num=nd.num
+    def json(self)->str:
+        return pgraph.table[self.num].__repr__()
+
