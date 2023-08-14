@@ -1,2 +1,1 @@
-
-python3 setup.py build_ext install --force
+docker build --platform=linux/amd64 -t sthv/mmcore:mmvec .

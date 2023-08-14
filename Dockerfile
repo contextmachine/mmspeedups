@@ -1,7 +1,5 @@
 FROM ghcr.io/contextmachine/mmcore:latest
 
-LABEL authors="andrewastakhov"
-WORKDIR mmcore
+LABEL authors="sth-v"
 COPY . .
 RUN python3 setup.py build_ext --inplace
-ENTRYPOINT ["python3"]
