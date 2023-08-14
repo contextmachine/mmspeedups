@@ -1,4 +1,6 @@
 [![Docker](https://github.com/contextmachine/mmspeedups/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/contextmachine/mmspeedups/actions/workflows/docker-publish.yml)
+
+Available in docker 🐳 and as 🐍 python extension
 # Build from source
 codon compiller is required
 ```bash
