@@ -99,7 +99,7 @@ class BuildCodonExt(build_ext):
 
 setup(
     name='mmvec',
-    version='0.1.9',
+    version='0.1.10',
     packages=['mmvec'],
     ext_modules=[
 

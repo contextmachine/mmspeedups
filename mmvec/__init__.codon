@@ -173,11 +173,11 @@ def trxmul(t1, t2):
     return mr(transpose(t1), t2)
 
 def matmul_point(m1:TransformList,point:VectorList)->VectorList:
-    a1,b1=len(m1), len(m1[0])
+
     z=[0.0,0.0,0.0]
-    for i in range(a1):
-        for j in range(b1):
-            z[i] += m1[i][j] * point[b1]
+    for i in range(3):
+        for j in range(3):
+            z[i] += m1[i][j] * point[j]
     return z
 def combine(t1: TransformList, t2: TransformList) -> TransformList:
     """

@@ -1,6 +1,7 @@
 import sys
 import os
-
+import docker
+docker.DockerClient()
 
 if __name__=="__main__":
     import subprocess as sp
