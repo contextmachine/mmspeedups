@@ -4,7 +4,7 @@ import sys
 import shutil
 from pathlib import Path
 
-import mmvec
+
 from setuptools import setup, Extension
 
 
@@ -99,7 +99,7 @@ class BuildCodonExt(build_ext):
 
 setup(
     name='mmvec',
-    version='0.1.5',
+    version='0.1.9',
     packages=['mmvec'],
     ext_modules=[
 
@@ -107,20 +107,21 @@ setup(
 
 
     ],
-    platforms=["macos/x86-64", "macos/arm64", "linux/amd64"],
+    platforms=["macos/universal","macos/x64","macos/arm64","linux/x64", "manylinux/x64"],
     cmdclass={'build_ext': BuildCodonExt}
 )
+
 setup(
-    name='mmgraph',
+    name='mmtests',
     version='0.1.5',
-    packages=['mmgraph'],
+    packages=['mmtests'],
     ext_modules=[
 
-        CodonExtension('mmgraph', 'mmgraph/__init__.codon'),
+        CodonExtension('mmtests', 'mmtests/__init__.codon'),
 
 
     ],
-    platforms=["macos/x86-64","macos/arm64","linux/amd64"],
+    platforms=["macos/universal","macos/x64","macos/arm64","linux/x64", "manylinux/x64"],
 
     cmdclass={'build_ext': BuildCodonExt}
 )

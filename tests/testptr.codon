@@ -1,0 +1,96 @@
+import python
+
+class Foo:
+    val:float
+
+    def __init__(self, val:float):
+
+
+        self.val=val
+
+    def __add__(self, other:Foo):
+        return Foo(val=self.val+other.val)
+    def __repr__(self):
+        return "Foo(val="+str(self.val)+")"
+
+
+
+
+
+__typetable__=Ptr[Foo](1024)
+last:int=0
+
+
+def createfoo(val:float):
+    global last
+    self=Foo(val)
+
+    __typetable__[last]=self
+
+    last+=1
+
+    return last-1
+"""
+fooi= createfoo(9.0)
+foo2= createfoo(1.0)
+foo_ptr=__ptr__(fooi)
+@pure
+@llvm
+def int_to_ptr[T](i:int)->Ptr[T]:
+    %0 = inttoptr i64 %i to T*
+    ret ptr %0
+
+@pure
+@llvm
+def int_to_ptr_foo[T](i:int)->Ptr[T]:
+    %0 = inttoptr i64 %i to ptr
+    %1 = getelementptr {=T}, ptr %0
+
+    ret ptr %1"""
+
+
+
+@dataclass(python=True)
+class FooBind:
+    _ptr:int
+    def __init__(self,val:int):
+
+
+        self._ptr=val
+
+
+
+
+
+    @property
+    def val(self):
+        return __typetable__[self._ptr].val
+
+
+    @overload
+    def __init__(self, val: float):
+        self._ptr = createfoo(val)
+
+
+    def __add__(self, other:FooBind)->FooBind:
+
+
+
+
+        return FooBind(__typetable__[self._ptr].val +__typetable__[other._ptr].val)
+
+    def set_v(self, v:float):
+        __typetable__[self._ptr].val=v
+
+    def __repr__(self):
+        return "FooBind(val="+str(self.val)+f" at: {self._ptr}"+ ")"
+
+
+@dataclass(python=True)
+class GetattrBind:
+    def __init__(self, index):
+        self.index=index
+    def __getattr__(self, name):
+        return float_buffers[self.index][name]
+    def __setattr__(self, name, v):
+        return float_buffers[self.index].__setattr__(name,v)

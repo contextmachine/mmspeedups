@@ -1,0 +1,224 @@
+
+import python
+VectorList=List[float]
+VectorTuple=Tuple[float,float,float]
+class FloatBuffer:
+    data: List[float]
+
+    shift: int = 3
+    _index:int
+
+    def __len__(self):
+        return len(self.data) // self.shift
+float_buffers=Ptr[FloatBuffer]()
+len_float_buffers=0
+def len_floatbufs():
+    return len_float_buffers
+@extend
+class FloatBuffer:
+    def __init__(self, shift: int=3, data:Optional[List[float]]=None):
+        global len_float_buffers
+
+        self.shift = shift
+        if data is None:
+            self.data = [0.0,0.0,0.0]
+        else:
+            self.data = data
+        self._index = len_floatbufs()
+
+        len_float_buffers+=1
+
+
+
+
+
+
+
+class FloatBufferItem:
+    ixs:int
+    _buffer:int
+    def __init__(self, ixs:int, buffer:int):
+        self.ixs=ixs
+        self._buffer=buffer
+    @property
+    def buffer(self):
+        return float_buffers[self._buffer]
+    def __getitem__(self, item:int):
+        return self.buffer.data[self.ixs+item]
+    def __setitem__(self, item:int, value:float):
+
+        self.buffer.data[self.ixs+item]=value
+    def __len__(self):
+        return self.buffer.shift
+    def __eq__(self, other:FloatBufferItem):
+        return all((self.ixs==other.ixs ,  self._buffer==other._buffer))
+    @overload
+    def __eq__(self, other:List[float]):
+        res=True
+        for i, v in enumerate(other):
+
+            if self.buffer.data[self.ixs + i] != v:
+                break
+            else:
+                continue
+        return res
+
+    @overload
+    def __eq__(self, other:Tuple[float,float,float]):
+        a,b,c=other
+
+        return all((self.buffer.data[self.ixs + 0]==a, self.buffer.data[self.ixs + 1]==b, self.buffer.data[self.ixs + 2]==c))
+    @overload
+    def __eq__(self, other: FloatBufferItem):
+        a, b, c = other[0],other[1],other[2]
+    
+        return all(
+            (
+                self.buffer.data[self.ixs + 0] == a,
+                self.buffer.data[self.ixs + 1] == b,
+                self.buffer.data[self.ixs + 2] == c,
+            )
+        )
+
+
+class FloatBufferItemIterator:
+    _state:int
+    _item:int
+    def __init__(self, item:FloatBufferItem):
+        self._item=item
+        self._state=-1
+    def __iter__(self):
+        return self
+    def __next__(self):
+        self._state+=1
+
+        if self._state > self._item.buffer.shift:
+            raise StopIteration()
+        else:
+            return self._item[self._state]
+
+@extend
+class  FloatBufferItem:
+    def __iter__(self):
+
+        return FloatBufferItemIterator(self)
+
+    def tolist(self):
+        _state=0
+        res=[]
+        while True:
+            if _state>self._item.buffer.shift:
+                break
+            else:
+                res.append(self.buffer.data[self.ixs + _state])
+        return res
+
+
+@extend
+class FloatBuffer:
+
+        def __getitem__(self, item:int):
+            start=item*self.shift
+            return FloatBufferItem(ixs=start, buffer=self._index)
+        def __setitem__(self, item:int, value:List[float]):
+            start = item * self.shift
+            for i in range(self.shift):
+
+                self.data[start+i]=value[i]
+
+
+
+        def add(self, v:List[float]):
+            b,i=self.check(v)
+            if b:
+                self[i]=v
+                return i
+            else:
+                self.data.extend(v)
+                return self.__len__()
+
+        def append(self, v):
+            self.add(v)
+        def add_many(self, v:List[List[float]]):
+            ixs=[]
+            for itm in v:
+                ixs.append(self.add(itm))
+            return ixs
+
+        def check(self, v:List[float])-> Tuple[bool, int]:
+            i=0
+            contains=False
+            while True:
+                if i>self.__len__():
+                    break
+
+                elif FloatBufferItem(ixs= i * self.shift, buffer=self._index).__eq__(v):
+                    contains=True
+                    break
+                else:
+                    i+=1
+            return contains, i
+
+
+def get_float_buffer(index:int):
+
+    def __getattr__( name):
+        return float_buffers[index][name]
+
+    return __getattr__
+def create_float_buffer(shift:int=3)->int:
+    buf=FloatBuffer(shift)
+    return buf._index
+
+default=FloatBuffer(shift=3, data=[0.0,4.2,0.1,1.1,4.1,1.3])
+@dataclass(python=True)
+class FloatBufferItemBind:
+    _buffer_ptr:int
+    ixs:int
+    def __init__(self, vec:List[float], buffer:int):
+
+
+        self._buffer_ptr=buffer
+        self.ixs = float_buffers[self._buffer_ptr].add(vec)
+    @overload
+    def __init__(self, ixs:int, buffer:int):
+
+
+        self._buffer_ptr=buffer
+        self.ixs = ixs
+    def __getitem__(self, item:int):
+
+        return float_buffers[self._buffer_ptr][self.ixs][item]
+    def __setitem__(self, item:int, v:float):
+
+        float_buffers[self._buffer_ptr][self.ixs][item]=v
+
+    def tolist(self):
+
+        bf=float_buffers[self._buffer_ptr]
+        return [float_buffers[self._buffer_ptr][self.ixs][i] for i in  range(bf.shift)]
+@dataclass(python=True)
+class FloatBufferBind:
+
+    _ptr:int
+
+    def __init__(self, ixs:int=0):
+
+        self._ptr=ixs
+
+    def __setitem__(self, item:int, v: List[float]):
+
+        float_buffers[self._ptr][item]=v
+
+    def __getitem__(self, item:int):
+        return float_buffers[self._ptr][item]
+    def append(self, v: List[float]):
+
+        float_buffers[self._ptr].append( v)
+
+    def add(self, v: List[float]):
+
+        return float_buffers[self._ptr].add(v)
+    def __repr__(self):
+        return f"FloatBufferBind() at {self._ptr}"
+
